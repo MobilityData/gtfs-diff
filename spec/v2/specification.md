@@ -80,7 +80,7 @@ GtfsDiffOutput
 | `files_added` | Integer | Required | Number of files added. |
 | `files_deleted` | Integer | Required | Number of files deleted. |
 | `files_modified` | Integer | Required | Number of files modified. |
-| `files_not_compared` | Integer | Required | Number of files that could not be meaningfully compared. |
+| `files_not_compared_count` | Integer | Required | Number of files that could not be meaningfully compared. |
 | `files` | Array | Required | Per-file summary with true (uncapped) counts. |
 | `files[].file_name` | String | Required | Name of the GTFS file. |
 | `files[].status` | String. Enum: `added`, `deleted`, `modified`, `not_compared` | Required | The file-level status. |
