@@ -1,0 +1,28 @@
+name: Validate JSON Schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "spec/**/*.json"
+  pull_request:
+    paths:
+      - "spec/**/*.json"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install jsonschema
+
+      - name: Validate JSON syntax
+        run: ./scripts/validate_json_syntax.sh
+
+      - name: Validate examples against schema
+        run: ./scripts/validate_examples.sh

@@ -26,10 +26,17 @@ GtfsDiffOutput
 │   ├── new_feed                # source (URL or local path), downloaded_at
 │   └── unsupported_files[]     # files skipped by the diff engine
 ├── summary                     # true aggregate counts (drives file tree sidebar)
-│   └── files[]                 # per-file: name + true counts by action
+│   ├── files_not_compared_count
+│   └── files[]                 # per-file: name + true counts by action + stats
 └── file_diffs[]                # one entry per changed supported file
     ├── file_name
-    ├── file_action             # "added" | "deleted" | "modified"
+    ├── file_action             # "added" | "deleted" | "modified" | "not_compared"
+    ├── not_compared_reason     # present when file_action is "not_compared"
+    │   ├── code
+    │   └── message
+    ├── ignored_columns[]       # columns excluded from the diff
+    │   ├── column
+    │   └── reason              # reuses not_compared_reason structure
     ├── columns_added[]
     ├── columns_deleted[]
     ├── row_changes
@@ -38,7 +45,12 @@ GtfsDiffOutput
     │   ├── added[]             # capped
     │   ├── deleted[]           # capped
     │   └── modified[]          # capped
-    └── truncated               # cap metadata (omitted counts)
+    ├── truncated               # cap metadata (omitted counts)
+    └── stats                   # optional file-level & column-level statistics
+        ├── total_rows_base
+        ├── total_rows_new
+        ├── rows_changed_percentage
+        └── column_stats[]
 ```
 
 ## Fields description
@@ -68,14 +80,23 @@ GtfsDiffOutput
 | `files_added` | Integer | Required | Number of files added. |
 | `files_deleted` | Integer | Required | Number of files deleted. |
 | `files_modified` | Integer | Required | Number of files modified. |
+| `files_not_compared` | Integer | Required | Number of files that could not be meaningfully compared. |
 | `files` | Array | Required | Per-file summary with true (uncapped) counts. |
 | `files[].file_name` | String | Required | Name of the GTFS file. |
-| `files[].status` | String. Enum: `added`, `deleted`, `modified` | Required | The file-level status. |
+| `files[].status` | String. Enum: `added`, `deleted`, `modified`, `not_compared` | Required | The file-level status. |
 | `files[].columns_added` | Integer | Optional | Number of columns added. Present when > 0. |
 | `files[].columns_deleted` | Integer | Optional | Number of columns deleted. Present when > 0. |
 | `files[].rows_added` | Integer | Optional | True count of rows added. Present when > 0. |
 | `files[].rows_deleted` | Integer | Optional | True count of rows deleted. Present when > 0. |
 | `files[].rows_modified` | Integer | Optional | True count of rows modified. Present when > 0. |
+| `files[].stats` | Object | Optional | Statistical information about changes in this file. |
+| `files[].stats.total_rows_base` | Integer | Optional | Total number of rows in the base version of the file. |
+| `files[].stats.total_rows_new` | Integer | Optional | Total number of rows in the new version of the file. |
+| `files[].stats.rows_changed_percentage` | Number | Optional | Percentage of rows that were added, deleted, or modified relative to the larger of the two versions. |
+| `files[].stats.column_stats` | Array | Optional | Per-column modification statistics. Only covers modified rows. |
+| `files[].stats.column_stats[].column` | String | Required | The column name. |
+| `files[].stats.column_stats[].modifications_count` | Integer | Required | Number of modified rows that had a change in this column. |
+| `files[].stats.column_stats[].modifications_percentage` | Number | Required | `modifications_count` as a percentage of total modified rows. |
 
 ### `file_diffs[]`
 
@@ -84,7 +105,15 @@ Each entry represents one changed supported file.
 | Field | Type | Required | Description |
 |:------|:-----|:---------|:------------|
 | `file_name` | String | Required | Name of the GTFS file. |
-| `file_action` | String. Enum: `"added"`, `"deleted"`, `"modified"` | Required | How this file changed between the two archives. |
+| `file_action` | String. Enum: `"added"`, `"deleted"`, `"modified"`, `"not_compared"` | Required | How this file changed between the two archives. |
+| `not_compared_reason` | Object | Optional | Present when `file_action` is `"not_compared"`. Explains why the file was not compared. |
+| `not_compared_reason.code` | String | Required | Machine-readable reason code (e.g. `"id_churn"`, `"missing_primary_key"`, `"file_too_large"`). |
+| `not_compared_reason.message` | String | Required | Human-readable explanation of why the file was not compared. |
+| `ignored_columns` | Array | Optional | Columns excluded from the diff because their values are unreliable (e.g. they reference a file that was not compared). |
+| `ignored_columns[].column` | String | Required | The column name that was ignored. |
+| `ignored_columns[].reason` | Object | Required | Why the column was ignored. Same structure as `not_compared_reason`. |
+| `ignored_columns[].reason.code` | String | Required | Machine-readable reason code. |
+| `ignored_columns[].reason.message` | String | Required | Human-readable explanation. |
 | `columns_added` | Array of String | Required | List of column names added to this file. |
 | `columns_deleted` | Array of String | Required | List of column names deleted from this file. |
 | `row_changes` | Object | Conditionally required | Present when the file has row-level changes (i.e. `file_action` is `"modified"`). |
@@ -96,6 +125,7 @@ Each entry represents one changed supported file.
 | `truncated` | Object | Optional | Present only when row changes exceed the cap. |
 | `truncated.is_truncated` | Boolean | Required | Always `true` when present. |
 | `truncated.omitted_count` | Integer | Required | Number of row changes omitted due to the cap. |
+| `stats` | Object | Optional | Statistical information about changes in this file. See `files[].stats` in `summary` for field definitions. |
 
 ## Capping behavior
 
@@ -115,7 +145,7 @@ This keeps the diff focused on what was actually compared, while still surfacing
 
 ## JSON Schema
 
-A formal JSON Schema for validation is available at [`json_schema/gtfs_diff_v2_schema.json`](json_schema/gtfs_diff_v2_schema.json).
+A formal JSON Schema for validation is available at [`json_schema/v2-rc1.schema.json`](json_schema/v2-rc1.json).
 
 ## Example
 
@@ -127,6 +157,7 @@ Given two GTFS archives where:
 - `shapes.txt` was added as a new file
 - `stop_times.txt` had 1213 row changes (120 added, 45 deleted, 1048 modified)
 - `stops.txt` had a column deleted and 8 row changes (2 added, 1 deleted, 5 modified)
+- `trips.txt` could not be meaningfully compared due to ID churn
 - `readme.pdf` and `custom_notes.txt` are non-GTFS files present in the archives
 
 The v2 output will:
@@ -135,6 +166,8 @@ The v2 output will:
 - Cap `stop_times.txt` row details to 50, reporting `omitted_count: 1163`
 - Show all 8 `stops.txt` row changes (under the cap, no `truncated` field)
 - Show `shapes.txt` as a file-level addition with no `row_changes`
+- Show `trips.txt` with `file_action: "not_compared"` and a `not_compared_reason` explaining the ID churn
+- Include optional `stats` on modified files with row counts, change percentages, and per-column modification breakdowns
 
 ## Full example
 
