@@ -146,7 +146,7 @@ This keeps the diff focused on what was actually compared, while still surfacing
 
 ## JSON Schema
 
-A formal JSON Schema for validation is available at [`json_schema/v2-rc1.schema.json`](json_schema/v2-rc1.json).
+A formal JSON Schema for validation is available at [`json_schema/v2-rc1.json`](json_schema/v2-rc1.json).
 
 ## Example
 
