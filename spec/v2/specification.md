@@ -9,7 +9,7 @@ A GTFS file is a ZIP archive containing a number of CSV files. A "GTFS Diff v2" 
 3. **Explicit scope**: files outside the supported scope are reported in `metadata.unsupported_files` rather than silently ignored.
 4. **Spec-aligned**: compatible with the existing [GTFS Diff v1 specification](../v1/specification.md).
 
-## Supported scope (v2.0)
+## Supported scope (v2.0.0-rc1)
 
 This version of the schema only supports files defined in the official [GTFS Schedule reference](https://gtfs.org/documentation/schedule/reference/).
 Any unsupported file in the GTFS archive (including non-`.txt` files like `readme.pdf`, `locations.geojson`, etc.) is **not diffed**. Instead, it is reported in `metadata.unsupported_files`.
@@ -92,6 +92,7 @@ GtfsDiffOutput
 | `files[].stats` | Object | Optional | Statistical information about changes in this file. |
 | `files[].stats.total_rows_base` | Integer | Optional | Total number of rows in the base version of the file. |
 | `files[].stats.total_rows_new` | Integer | Optional | Total number of rows in the new version of the file. |
+| `files[].stats.total_rows_modified` | Integer | Optional | Total number of rows modified between the two versions of the file. |
 | `files[].stats.rows_changed_percentage` | Number | Optional | Percentage of rows that were added, deleted, or modified relative to the larger of the two versions. |
 | `files[].stats.column_stats` | Array | Optional | Per-column modification statistics. Only covers modified rows. |
 | `files[].stats.column_stats[].column` | String | Required | The column name. |

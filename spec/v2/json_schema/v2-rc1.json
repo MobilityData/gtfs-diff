@@ -276,6 +276,11 @@
           "minimum": 0,
           "description": "Total number of rows in the new version of the file."
         },
+        "total_rows_modified": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of rows modified between the two versions of the file."
+        },
         "rows_changed_percentage": {
           "type": "number",
           "minimum": 0,
