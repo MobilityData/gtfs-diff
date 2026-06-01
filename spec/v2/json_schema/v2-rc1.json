@@ -154,8 +154,7 @@
           "type": "integer",
           "minimum": 0,
           "description": "True count of rows modified."
-        },
-        "stats": { "$ref": "#/$defs/file_stats" }
+        }
       }
     },
     "file_diff": {

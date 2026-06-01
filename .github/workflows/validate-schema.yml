@@ -5,9 +5,13 @@ on:
     branches: [main]
     paths:
       - "spec/**/*.json"
+      - "scripts/validate_examples.sh"
+      - "scripts/validate_json_syntax.sh"
   pull_request:
     paths:
       - "spec/**/*.json"
+      - "scripts/validate_examples.sh"
+      - "scripts/validate_json_syntax.sh"
 
 jobs:
   validate:

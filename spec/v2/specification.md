@@ -27,7 +27,7 @@ GtfsDiffOutput
 │   └── unsupported_files[]     # files skipped by the diff engine
 ├── summary                     # true aggregate counts (drives file tree sidebar)
 │   ├── files_not_compared_count
-│   └── files[]                 # per-file: name + true counts by action + stats
+│   └── files[]                 # per-file: name + true counts by action
 └── file_diffs[]                # one entry per changed supported file
     ├── file_name
     ├── file_action             # "added" | "deleted" | "modified" | "not_compared"
@@ -89,15 +89,6 @@ GtfsDiffOutput
 | `files[].rows_added` | Integer | Optional | True count of rows added. Present when > 0. |
 | `files[].rows_deleted` | Integer | Optional | True count of rows deleted. Present when > 0. |
 | `files[].rows_modified` | Integer | Optional | True count of rows modified. Present when > 0. |
-| `files[].stats` | Object | Optional | Statistical information about changes in this file. |
-| `files[].stats.total_rows_base` | Integer | Optional | Total number of rows in the base version of the file. |
-| `files[].stats.total_rows_new` | Integer | Optional | Total number of rows in the new version of the file. |
-| `files[].stats.total_rows_modified` | Integer | Optional | Total number of rows modified between the two versions of the file. |
-| `files[].stats.rows_changed_percentage` | Number | Optional | Percentage of rows that were added, deleted, or modified relative to the larger of the two versions. |
-| `files[].stats.column_stats` | Array | Optional | Per-column modification statistics. Only covers modified rows. |
-| `files[].stats.column_stats[].column` | String | Required | The column name. |
-| `files[].stats.column_stats[].modifications_count` | Integer | Required | Number of modified rows that had a change in this column. |
-| `files[].stats.column_stats[].modifications_percentage` | Number | Required | `modifications_count` as a percentage of total modified rows. |
 
 ### `file_diffs[]`
 
