@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "schema_version": "2.0.0",
+    "schema_version": "2.0.0-rc1",
     "generated_at": "2026-04-08T14:30:00Z",
     "row_changes_cap_per_file": 50,
     "base_feed": {
@@ -28,22 +28,14 @@
     "files_added_count": 1,
     "files_deleted_count": 0,
     "files_modified_count": 2,
+    "files_not_compared_count": 1,
     "files": [
-      { "file_name": "shapes.txt", "status": "added", "rows_added_count": 30 },
+      { "file_name": "shapes.txt", "status": "added" },
+      { "file_name": "stop_times.txt", "status": "modified" },
+      { "file_name": "stops.txt", "status": "modified" },
       {
-        "file_name": "stop_times.txt",
-        "status": "modified",
-        "rows_added_count": 120,
-        "rows_deleted_count": 45,
-        "rows_modified_count": 1048
-      },
-      {
-        "file_name": "stops.txt",
-        "status": "modified",
-        "columns_deleted_count": 1,
-        "rows_added_count": 2,
-        "rows_deleted_count": 1,
-        "rows_modified_count": 5
+        "file_name": "trips.txt",
+        "status": "not_compared"
       }
     ]
   },
@@ -59,6 +51,40 @@
       "file_action": "modified",
       "columns_added": [],
       "columns_deleted": [],
+      "ignored_columns": [
+        {
+          "column": "trip_id",
+          "reason": {
+            "code": "id_churn",
+            "message": "Column references trips.txt which was not compared due to ID churn."
+          }
+        }
+      ],
+      "stats": {
+        "total_rows_base": 5000,
+        "total_rows_new": 5075,
+        "rows_added_count": 120,
+        "rows_deleted_count": 45,
+        "rows_modified_count": 1048,
+        "rows_changed_percentage": 23.9,
+        "column_stats": [
+          {
+            "column": "arrival_time",
+            "modifications_count": 800,
+            "modifications_percentage": 76.3
+          },
+          {
+            "column": "departure_time",
+            "modifications_count": 790,
+            "modifications_percentage": 75.4
+          },
+          {
+            "column": "stop_id",
+            "modifications_count": 12,
+            "modifications_percentage": 1.1
+          }
+        ]
+      },
       "row_changes": {
         "primary_key": ["trip_id", "stop_sequence"],
         "columns": ["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"],
@@ -92,6 +118,27 @@
       "file_action": "modified",
       "columns_added": [],
       "columns_deleted": [{ "name": "internal_id", "position": 6 }],
+      "stats": {
+        "total_rows_base": 50,
+        "total_rows_new": 51,
+        "columns_deleted_count": 1,
+        "rows_added_count": 2,
+        "rows_deleted_count": 1,
+        "rows_modified_count": 5,
+        "rows_changed_percentage": 15.7,
+        "column_stats": [
+          {
+            "column": "stop_name",
+            "modifications_count": 3,
+            "modifications_percentage": 60.0
+          },
+          {
+            "column": "stop_lat",
+            "modifications_count": 2,
+            "modifications_percentage": 40.0
+          }
+        ]
+      },
       "row_changes": {
         "primary_key": ["stop_id"],
         "columns": ["stop_id", "stop_name", "stop_lat", "stop_lon", "zone_id"],
@@ -121,6 +168,14 @@
             ]
           }
         ]
+      }
+    },
+    {
+      "file_name": "trips.txt",
+      "file_action": "not_compared",
+      "not_compared_reason": {
+        "code": "id_churn",
+        "message": "Primary key values differ too much between versions to produce a meaningful diff (>90% of IDs changed)."
       }
     }
   ]

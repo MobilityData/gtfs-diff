@@ -1,16 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/MobilityData/gtfs_diff/spec/v2/json_schema/gtfs_diff_v2_schema.json",
+  "$id": "https://github.com/MobilityData/gtfs_diff/spec/v2/json_schema/v2-rc1.json",
   "title": "GTFS Diff v2",
   "description": "Schema for GTFS Diff v2 output: a single JSON document describing all differences between two GTFS archives.",
   "type": "object",
   "required": ["metadata", "summary", "file_diffs"],
-  "additionalProperties": false,
   "properties": {
     "metadata": {
       "type": "object",
       "required": ["schema_version", "generated_at", "row_changes_cap_per_file", "base_feed", "new_feed", "unsupported_files"],
-      "additionalProperties": false,
       "properties": {
         "schema_version": {
           "type": "string",
@@ -33,7 +31,6 @@
           "items": {
             "type": "object",
             "required": ["file_name", "present_in"],
-            "additionalProperties": false,
             "properties": {
               "file_name": {
                 "type": "string",
@@ -51,8 +48,7 @@
     },
     "summary": {
       "type": "object",
-      "required": ["total_changes", "files_added_count", "files_deleted_count", "files_modified_count", "files"],
-      "additionalProperties": false,
+      "required": ["total_changes", "files_added_count", "files_deleted_count", "files_modified_count", "files_not_compared_count", "files"],
       "properties": {
         "total_changes": {
           "type": "integer",
@@ -74,6 +70,11 @@
           "minimum": 0,
           "description": "Number of files modified."
         },
+        "files_not_compared_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of files that could not be meaningfully compared."
+        },
         "files": {
           "type": "array",
           "items": { "$ref": "#/$defs/file_summary" }
@@ -89,7 +90,6 @@
     "column_entry": {
       "type": "object",
       "required": ["name", "position"],
-      "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string",
@@ -105,7 +105,6 @@
     "feed_source": {
       "type": "object",
       "required": ["source", "downloaded_at"],
-      "additionalProperties": false,
       "properties": {
         "source": {
           "type": "string",
@@ -121,7 +120,6 @@
     "file_summary": {
       "type": "object",
       "required": ["file_name", "status"],
-      "additionalProperties": false,
       "properties": {
         "file_name": {
           "type": "string",
@@ -129,40 +127,14 @@
         },
         "status": {
           "type": "string",
-          "enum": ["added", "deleted", "modified"],
+          "enum": ["added", "deleted", "modified", "not_compared"],
           "description": "File-level status."
-        },
-        "columns_added_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of columns added."
-        },
-        "columns_deleted_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of columns deleted."
-        },
-        "rows_added_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows added."
-        },
-        "rows_deleted_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows deleted."
-        },
-        "rows_modified_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows modified."
         }
       }
     },
     "file_diff": {
       "type": "object",
-      "required": ["file_name", "file_action", "columns_added", "columns_deleted"],
-      "additionalProperties": false,
+      "required": ["file_name", "file_action"],
       "properties": {
         "file_name": {
           "type": "string",
@@ -170,8 +142,14 @@
         },
         "file_action": {
           "type": "string",
-          "enum": ["modified", "added", "deleted"],
+          "enum": ["modified", "added", "deleted", "not_compared"],
           "description": "Action describing how this file changed."
+        },
+        "not_compared_reason": { "$ref": "#/$defs/not_compared_reason" },
+        "ignored_columns": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ignored_column" },
+          "description": "Columns excluded from the diff because their values are unreliable (e.g. they reference a file that was not compared)."
         },
         "columns_added": {
           "type": "array",
@@ -186,7 +164,6 @@
         "row_changes": {
           "type": "object",
           "required": ["primary_key", "columns", "added", "deleted", "modified"],
-          "additionalProperties": false,
           "properties": {
             "primary_key": {
               "type": "array",
@@ -219,7 +196,6 @@
         "truncated": {
           "type": "object",
           "required": ["is_truncated", "omitted_count"],
-          "additionalProperties": false,
           "properties": {
             "is_truncated": {
               "type": "boolean",
@@ -232,13 +208,110 @@
               "description": "Number of row changes omitted due to the cap."
             }
           }
+        },
+        "stats": { "$ref": "#/$defs/file_stats" }
+      }
+    },
+    "not_compared_reason": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Machine-readable reason code (e.g. \"id_churn\", \"missing_primary_key\", \"file_too_large\")."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable explanation of why the file or column was not compared."
+        }
+      }
+    },
+    "ignored_column": {
+      "type": "object",
+      "required": ["column", "reason"],
+      "properties": {
+        "column": {
+          "type": "string",
+          "description": "The column name that was ignored."
+        },
+        "reason": { "$ref": "#/$defs/not_compared_reason" }
+      }
+    },
+    "file_stats": {
+      "type": "object",
+      "properties": {
+        "total_rows_base": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of rows in the base version of the file."
+        },
+        "total_rows_new": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of rows in the new version of the file."
+        },
+        "columns_added_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of columns added."
+        },
+        "columns_deleted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of columns deleted."
+        },
+        "rows_added_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows added."
+        },
+        "rows_deleted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows deleted."
+        },
+        "rows_modified_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows modified."
+        },
+        "rows_changed_percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Percentage of rows that were added, deleted, or modified relative to the larger of the two versions."
+        },
+        "column_stats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/column_stat" },
+          "description": "Per-column modification statistics. Only covers modified rows."
+        }
+      }
+    },
+    "column_stat": {
+      "type": "object",
+      "required": ["column", "modifications_count", "modifications_percentage"],
+      "properties": {
+        "column": {
+          "type": "string",
+          "description": "The column name."
+        },
+        "modifications_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of modified rows that had a change in this column."
+        },
+        "modifications_percentage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "modifications_count as a percentage of total modified rows."
         }
       }
     },
     "row_added": {
       "type": "object",
       "required": ["identifier", "raw_value", "new_line_number"],
-      "additionalProperties": false,
       "properties": {
         "identifier": {
           "type": "object",
@@ -259,7 +332,6 @@
     "row_deleted": {
       "type": "object",
       "required": ["identifier", "raw_value", "base_line_number"],
-      "additionalProperties": false,
       "properties": {
         "identifier": {
           "type": "object",
@@ -280,7 +352,6 @@
     "row_modified": {
       "type": "object",
       "required": ["identifier", "raw_value", "base_line_number", "new_line_number", "field_changes"],
-      "additionalProperties": false,
       "properties": {
         "identifier": {
           "type": "object",
@@ -307,7 +378,6 @@
           "items": {
             "type": "object",
             "required": ["field", "base_value", "new_value"],
-            "additionalProperties": false,
             "properties": {
               "field": {
                 "type": "string",
