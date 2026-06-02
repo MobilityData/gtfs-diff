@@ -222,7 +222,7 @@
         },
         "message": {
           "type": "string",
-          "description": "Human-readable explanation of why the file was not compared."
+          "description": "Human-readable explanation of why the file or column was not compared."
         }
       }
     },
