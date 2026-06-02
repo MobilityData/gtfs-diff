@@ -129,31 +129,6 @@
           "type": "string",
           "enum": ["added", "deleted", "modified", "not_compared"],
           "description": "File-level status."
-        },
-        "columns_added_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of columns added."
-        },
-        "columns_deleted_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "Number of columns deleted."
-        },
-        "rows_added_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows added."
-        },
-        "rows_deleted_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows deleted."
-        },
-        "rows_modified_count": {
-          "type": "integer",
-          "minimum": 0,
-          "description": "True count of rows modified."
         }
       }
     },
@@ -275,10 +250,30 @@
           "minimum": 0,
           "description": "Total number of rows in the new version of the file."
         },
-        "total_rows_modified": {
+        "columns_added_count": {
           "type": "integer",
           "minimum": 0,
-          "description": "Total number of rows modified between the two versions of the file."
+          "description": "Number of columns added."
+        },
+        "columns_deleted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of columns deleted."
+        },
+        "rows_added_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows added."
+        },
+        "rows_deleted_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows deleted."
+        },
+        "rows_modified_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "True count of rows modified."
         },
         "rows_changed_percentage": {
           "type": "number",

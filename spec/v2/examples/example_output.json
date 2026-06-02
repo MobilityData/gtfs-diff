@@ -30,63 +30,9 @@
     "files_modified_count": 2,
     "files_not_compared_count": 1,
     "files": [
-      { "file_name": "shapes.txt", "status": "added", "rows_added_count": 30 },
-      {
-        "file_name": "stop_times.txt",
-        "status": "modified",
-        "rows_added_count": 120,
-        "rows_deleted_count": 45,
-        "rows_modified_count": 1048,
-        "stats": {
-          "total_rows_base": 5000,
-          "total_rows_new": 5075,
-          "total_rows_modified": 1048,
-          "rows_changed_percentage": 23.9,
-          "column_stats": [
-            {
-              "column": "arrival_time",
-              "modifications_count": 800,
-              "modifications_percentage": 76.3
-            },
-            {
-              "column": "departure_time",
-              "modifications_count": 790,
-              "modifications_percentage": 75.4
-            },
-            {
-              "column": "stop_id",
-              "modifications_count": 12,
-              "modifications_percentage": 1.1
-            }
-          ]
-        }
-      },
-      {
-        "file_name": "stops.txt",
-        "status": "modified",
-        "columns_deleted_count": 1,
-        "rows_added_count": 2,
-        "rows_deleted_count": 1,
-        "rows_modified_count": 5,
-        "stats": {
-          "total_rows_base": 50,
-          "total_rows_new": 51,
-          "total_rows_modified": 5,
-          "rows_changed_percentage": 15.7,
-          "column_stats": [
-            {
-              "column": "stop_name",
-              "modifications_count": 3,
-              "modifications_percentage": 60.0
-            },
-            {
-              "column": "stop_lat",
-              "modifications_count": 2,
-              "modifications_percentage": 40.0
-            }
-          ]
-        }
-      },
+      { "file_name": "shapes.txt", "status": "added" },
+      { "file_name": "stop_times.txt", "status": "modified" },
+      { "file_name": "stops.txt", "status": "modified" },
       {
         "file_name": "trips.txt",
         "status": "not_compared"
@@ -117,7 +63,9 @@
       "stats": {
         "total_rows_base": 5000,
         "total_rows_new": 5075,
-        "total_rows_modified": 1048,
+        "rows_added_count": 120,
+        "rows_deleted_count": 45,
+        "rows_modified_count": 1048,
         "rows_changed_percentage": 23.9,
         "column_stats": [
           {
@@ -173,7 +121,10 @@
       "stats": {
         "total_rows_base": 50,
         "total_rows_new": 51,
-        "total_rows_modified": 5,
+        "columns_deleted_count": 1,
+        "rows_added_count": 2,
+        "rows_deleted_count": 1,
+        "rows_modified_count": 5,
         "rows_changed_percentage": 15.7,
         "column_stats": [
           {

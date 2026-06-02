@@ -27,7 +27,7 @@ GtfsDiffOutput
 │   └── unsupported_files[]     # files skipped by the diff engine
 ├── summary                     # true aggregate counts (drives file tree sidebar)
 │   ├── files_not_compared_count
-│   └── files[]                 # per-file: name + true counts by action
+│   └── files[]                 # per-file: name + status
 └── file_diffs[]                # one entry per changed supported file
     ├── file_name
     ├── file_action             # "added" | "deleted" | "modified" | "not_compared"
@@ -84,11 +84,25 @@ GtfsDiffOutput
 | `files` | Array | Required | Per-file summary with true (uncapped) counts. |
 | `files[].file_name` | String | Required | Name of the GTFS file. |
 | `files[].status` | String. Enum: `added`, `deleted`, `modified`, `not_compared` | Required | The file-level status. |
-| `files[].columns_added` | Integer | Optional | Number of columns added. Present when > 0. |
-| `files[].columns_deleted` | Integer | Optional | Number of columns deleted. Present when > 0. |
-| `files[].rows_added` | Integer | Optional | True count of rows added. Present when > 0. |
-| `files[].rows_deleted` | Integer | Optional | True count of rows deleted. Present when > 0. |
-| `files[].rows_modified` | Integer | Optional | True count of rows modified. Present when > 0. |
+
+### `stats`
+
+The `stats` object appears in `file_diffs[]`. All fields are optional.
+
+| Field | Type | Description |
+|:------|:-----|:------------|
+| `total_rows_base` | Integer | Total number of rows in the base version of the file. |
+| `total_rows_new` | Integer | Total number of rows in the new version of the file. |
+| `columns_added_count` | Integer | Number of columns added. |
+| `columns_deleted_count` | Integer | Number of columns deleted. |
+| `rows_added_count` | Integer | True count of rows added. |
+| `rows_deleted_count` | Integer | True count of rows deleted. |
+| `rows_modified_count` | Integer | True count of rows modified. |
+| `rows_changed_percentage` | Number | Percentage of rows that were added, deleted, or modified relative to the larger of the two versions. |
+| `column_stats` | Array | Per-column modification statistics. Only covers modified rows. |
+| `column_stats[].column` | String | The column name. |
+| `column_stats[].modifications_count` | Integer | Number of modified rows that had a change in this column. |
+| `column_stats[].modifications_percentage` | Number | `modifications_count` as a percentage of total modified rows. |
 
 ### `file_diffs[]`
 
@@ -117,7 +131,7 @@ Each entry represents one changed supported file.
 | `truncated` | Object | Optional | Present only when row changes exceed the cap. |
 | `truncated.is_truncated` | Boolean | Required | Always `true` when present. |
 | `truncated.omitted_count` | Integer | Required | Number of row changes omitted due to the cap. |
-| `stats` | Object | Optional | Statistical information about changes in this file. See `files[].stats` in `summary` for field definitions. |
+| `stats` | Object | Optional | Statistics for this file. See `stats` section above. |
 
 ## Capping behavior
 
