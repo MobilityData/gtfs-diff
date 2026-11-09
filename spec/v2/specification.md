@@ -28,29 +28,42 @@ GtfsDiffOutput
 ├── summary                     # true aggregate counts (drives file tree sidebar)
 │   ├── files_not_compared_count
 │   └── files[]                 # per-file: name + status
-└── file_diffs[]                # one entry per changed supported file
-    ├── file_name
-    ├── file_action             # "added" | "deleted" | "modified" | "not_compared"
-    ├── not_compared_reason     # present when file_action is "not_compared"
-    │   ├── code
-    │   └── message
-    ├── ignored_columns[]       # columns excluded from the diff
-    │   ├── column
-    │   └── reason              # reuses not_compared_reason structure
-    ├── columns_added[]
-    ├── columns_deleted[]
-    ├── row_changes
-    │   ├── primary_key[]
-    │   ├── columns[]           # union of base + new; base column order first
-    │   ├── added[]             # capped
-    │   ├── deleted[]           # capped
-    │   └── modified[]          # capped
-    ├── truncated               # cap metadata (omitted counts)
-    └── stats                   # optional file-level & column-level statistics
-        ├── total_rows_base
-        ├── total_rows_new
-        ├── rows_changed_percentage
-        └── column_stats[]
+├── file_diffs[]                # one entry per changed supported file
+│   ├── file_name
+│   ├── file_action             # "added" | "deleted" | "modified" | "not_compared"
+│   ├── not_compared_reason     # present when file_action is "not_compared"
+│   │   ├── code
+│   │   └── message
+│   ├── ignored_columns[]       # columns excluded from the diff
+│   │   ├── column
+│   │   └── reason              # reuses not_compared_reason structure
+│   ├── columns_added[]
+│   ├── columns_deleted[]
+│   ├── row_changes
+│   │   ├── primary_key[]
+│   │   ├── columns[]           # union of base + new; base column order first
+│   │   ├── added[]             # capped
+│   │   ├── deleted[]           # capped
+│   │   └── modified[]          # capped
+│   ├── truncated               # cap metadata (omitted counts)
+│   └── stats                   # optional file-level & column-level statistics
+│       ├── total_rows_base
+│       ├── total_rows_new
+│       ├── rows_changed_percentage
+│       └── column_stats[]
+└── highlights                  # optional: changes worth checking first
+    ├── cap_per_code
+    ├── parameters
+    ├── counts                  # true counts per code
+    └── items[]                 # capped per code
+        ├── code                # open set, see "Highlight codes"
+        ├── message
+        ├── files[]
+        ├── references[]        # rows the highlight is about
+        │   ├── file_name
+        │   ├── feed            # "base" | "new"
+        │   └── identifier
+        └── details             # code-specific values
 ```
 
 ## Fields description
@@ -133,6 +146,38 @@ Each entry represents one changed supported file.
 | `truncated.omitted_count` | Integer | Required | Number of row changes omitted due to the cap. |
 | `stats` | Object | Optional | Statistics for this file. See `stats` section above. |
 
+### `highlights`
+
+Notable highlights are changes that people using the diff should check first, such as a stop removed with nothing nearby to replace it. The object is optional: producers that do not look for highlights omit it, and an empty `items` array means none were found.
+
+| Field | Type | Required | Description |
+|:------|:-----|:---------|:------------|
+| `cap_per_code` | Integer or null | Required | Maximum number of items included per code. `null` means no cap is applied. |
+| `parameters` | Object | Optional | Settings the producer used to find the highlights (e.g. distance thresholds). Producer-specific. |
+| `counts` | Object | Required | True (uncapped) number of highlights per code, e.g. `{"stop_removed": 3}`. Codes with no highlights are omitted. |
+| `items` | Array | Required | Highlights, capped per code, the most important first within each code. |
+| `items[].code` | String | Required | Machine-readable kind of highlight. See [Highlight codes](#highlight-codes). |
+| `items[].message` | String | Required | Human-readable sentence describing the highlight. |
+| `items[].files` | Array of String | Required | GTFS files the highlight is about. |
+| `items[].references` | Array | Optional | Rows of either feed the highlight is about, so consumers can link it to `file_diffs`. |
+| `items[].references[].file_name` | String | Required | Name of the GTFS file. |
+| `items[].references[].feed` | String. Enum: `base`, `new` | Required | Which feed the identifier values come from. |
+| `items[].references[].identifier` | Object | Required | Primary key values of the row, as in `row_changes`, or of its leading primary key columns to refer to every row they cover (e.g. `{"shape_id": "SH1"}` for a whole shape). |
+| `items[].details` | Object | Optional | Values specific to the code. Their fields are listed with each code below. |
+
+#### Highlight codes
+
+`code` is an open set, like `not_compared_reason.code`: producers may report codes not listed here, and consumers ignore codes they do not know. Only `code`, `message`, `files` and `references` are shared by every code; `details` is free-form, so new kinds of highlights do not need a schema change. Codes are documented here as they are adopted.
+
+| Code | Files | Reported when | `details` |
+|:-----|:------|:--------------|:----------|
+| `service_day_without_trips` | `calendar.txt`, `calendar_dates.txt`, `trips.txt` | Dates within the new feed's service period, from a reference date on, had trips in the base feed and have none in the new feed. Consecutive dates form one highlight. | `date_from`, `date_to` (ISO 8601 dates), `days`, `base_trips_min`, `base_trips_max` (trips per day in the base feed) |
+| `stop_removed` | `stops.txt` | A boarding stop of the base feed has no counterpart in the new feed, and no new stop is close enough to replace it. | `stop_name`, `lat`, `lon`, `base_trips` (trips that served it in the base feed) |
+| `stop_moved` | `stops.txt` | A stop present in both feeds moved at least a threshold distance. | `stop_name`, `distance_m`, `base`, `new` (each `[lat, lon]`) |
+| `shape_moved` | `shapes.txt` | A shape present in both feeds is at least a threshold distance from its base line somewhere. | `route` (its most common route), `distance_m` |
+
+How a producer decides that an entity of the base feed and one of the new feed are the same (for example a stop whose `stop_id` changed) is up to the producer; `references` then names both rows.
+
 ## Capping behavior
 
 The cap applies to the **combined** count of `added + deleted + modified` rows per file, in first-encountered order. A file with 30 added, 15 deleted, and 200 modified rows (245 total) hits the cap at 50 and reports `omitted_count: 195`.
@@ -162,7 +207,7 @@ See [`examples/example_output.json`](examples/example_output.json) for a full ex
 Given two GTFS archives where:
 - `shapes.txt` was added as a new file
 - `stop_times.txt` had 1213 row changes (120 added, 45 deleted, 1048 modified)
-- `stops.txt` had a column deleted and 8 row changes (2 added, 1 deleted, 5 modified)
+- `stops.txt` had a column deleted and 8 row changes (2 added, 1 deleted, 5 modified), including stop `A` removed and stop `B` moved 134 m
 - `trips.txt` could not be meaningfully compared due to ID churn
 - `readme.pdf` and `custom_notes.txt` are non-GTFS files present in the archives
 
@@ -174,6 +219,7 @@ The v2 output will:
 - Show `shapes.txt` as a file-level addition with no `row_changes`
 - Show `trips.txt` with `file_action: "not_compared"` and a `not_compared_reason` explaining the ID churn
 - Include optional `stats` on modified files with row counts, change percentages, and per-column modification breakdowns
+- List two `highlights`: stop `A`, removed with no new stop nearby, and stop `B`, which moved 134 m
 
 ## Full example
 
