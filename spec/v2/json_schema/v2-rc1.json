@@ -84,9 +84,86 @@
     "file_diffs": {
       "type": "array",
       "items": { "$ref": "#/$defs/file_diff" }
-    }
+    },
+    "highlights": { "$ref": "#/$defs/highlights" }
   },
   "$defs": {
+    "highlights": {
+      "type": "object",
+      "required": ["cap_per_code", "counts", "items"],
+      "description": "Notable highlights: changes that people using the diff should check first. Optional; producers that do not look for highlights omit it.",
+      "properties": {
+        "cap_per_code": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Maximum number of items included per code. null means no cap is applied."
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Settings the producer used to find the highlights (e.g. distance thresholds, the date from which service days are checked). Producer-specific."
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 1 },
+          "description": "True (uncapped) number of highlights per code. Codes with no highlights are omitted."
+        },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/highlight" },
+          "description": "Highlights (capped per code), the most important first within each code."
+        }
+      }
+    },
+    "highlight": {
+      "type": "object",
+      "required": ["code", "message", "files"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Machine-readable kind of highlight (e.g. \"stop_removed\"). Consumers ignore codes they do not know."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable sentence describing the highlight."
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "GTFS files the highlight is about."
+        },
+        "references": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/highlight_reference" },
+          "description": "Rows of either feed the highlight is about, so consumers can link it to file_diffs."
+        },
+        "details": {
+          "type": "object",
+          "description": "Values specific to the code (e.g. a distance). Their fields are described with each code in the specification."
+        }
+      }
+    },
+    "highlight_reference": {
+      "type": "object",
+      "required": ["file_name", "feed", "identifier"],
+      "properties": {
+        "file_name": {
+          "type": "string",
+          "description": "Name of the GTFS file."
+        },
+        "feed": {
+          "type": "string",
+          "enum": ["base", "new"],
+          "description": "Which feed the identifier values come from."
+        },
+        "identifier": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "minProperties": 1,
+          "description": "Primary key values of the row, or of the leading primary key columns to refer to every row they cover (e.g. shape_id for a whole shape)."
+        }
+      }
+    },
     "column_entry": {
       "type": "object",
       "required": ["name", "position"],

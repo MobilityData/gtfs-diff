@@ -178,5 +178,48 @@
         "message": "Primary key values differ too much between versions to produce a meaningful diff (>90% of IDs changed)."
       }
     }
-  ]
+  ],
+  "highlights": {
+    "cap_per_code": 100,
+    "parameters": {
+      "as_of": "2026-04-01",
+      "stop_moved_m": 50,
+      "shape_moved_m": 50
+    },
+    "counts": {
+      "stop_removed": 1,
+      "stop_moved": 1
+    },
+    "items": [
+      {
+        "code": "stop_removed",
+        "message": "Stop A (Town center) was removed, with no new stop within 100 m to replace it.",
+        "files": ["stops.txt"],
+        "references": [
+          { "file_name": "stops.txt", "feed": "base", "identifier": { "stop_id": "A" } }
+        ],
+        "details": {
+          "stop_name": "Town center",
+          "lat": 45.5,
+          "lon": -73.55,
+          "base_trips": 120
+        }
+      },
+      {
+        "code": "stop_moved",
+        "message": "Stop B (Train station) moved 134 m.",
+        "files": ["stops.txt"],
+        "references": [
+          { "file_name": "stops.txt", "feed": "base", "identifier": { "stop_id": "B" } },
+          { "file_name": "stops.txt", "feed": "new", "identifier": { "stop_id": "B" } }
+        ],
+        "details": {
+          "stop_name": "Train station",
+          "distance_m": 133.6,
+          "base": [45.49, -73.56],
+          "new": [45.4912, -73.56]
+        }
+      }
+    ]
+  }
 }
